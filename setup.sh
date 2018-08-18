@@ -5,8 +5,7 @@
 
 #安装expect
 
-userName=`whoami`
-if [["$userName" -eq "moja"]]; then
+if [ `whoami` = "moja" ];then
   echo "请切换到pi用户或root用户下再执行脚本！"
   exit 0
 fi
