@@ -16,6 +16,8 @@ logPath="/var/tmp/remote-terminal-client-logs"
 appPath="/home/moja/remote-terminal-client/app.js"
 pm2Path="/home/moja/nodejs/bin/pm2"
 npmPath="/home/moja/nodejs/bin/npm"
+clientPath="/home/moja/remote-terminal-client"
+
 hostName="47.98.253.35"
 port=3000
 
@@ -26,7 +28,7 @@ if [ ! -f "/etc/init.d/rc.local" ]; then
 fi
 
 chmod 755 /etc/init.d/rc.local
-sed -i ‘/${autoStart}/d’ /etc/init.d/rc.local
+sed -i '/${autoStart}/d' /etc/init.d/rc.local
 echo "${autoStart}" >> /etc/init.d/rc.local
 
 #获取nodejs版本号
@@ -70,19 +72,21 @@ runuser -l moja -c "rm /home/moja/nodejs -rf"
 
 mkdir -p /home/moja/nodejs
 
-echo `which pm2` |  while read line
+runuser -l moja -c "echo `which pm2` |  while read line
 do
 rm $line -rf
 done
-echo `which node` |  while read line
+"
+runuser -l moja -c "echo `which node` |  while read line
 do
 rm $line -rf
 done
-echo `which npm` |  while read line
+"
+runuser -l moja -c "echo `which npm` |  while read line
 do
-rm $line -rf
+#rm $line -rf
 done
-
+"
 wget -O /home/moja/${verName} https://nodejs.org/dist/v${VERSION}/${verName}
 tar -xJf /home/moja/${verName} --no-wildcards-match-slash --anchored \
      --exclude */CHANGELOG.md --exclude */LICENSE --exclude */README.md \
@@ -90,12 +94,12 @@ tar -xJf /home/moja/${verName} --no-wildcards-match-slash --anchored \
 
 echo "export PATH=`echo $PATH |sed 's/:\/home\/moja\/nodejs\/bin\///g'`:/home/moja/nodejs/bin/" >> /home/moja/.profile
 source /home/moja/.profile
-wget -O /home/moja/remote-terminal-client.tar.gz http://$hostName:$port/api/remote_terminal/getterminaltar
-tar -xz -f /home/moja/remote-terminal-client.tar.gz
+wget -O $clientPath.tar.gz http://$hostName:$port/api/remote_terminal/getterminaltar
+tar -xz -f $clientPath.tar.gz
 sleep 2
-runuser -l moja -c "$npmPath install --prefix /home/moja/remote-terminal-client node-pty"
-runuser -l moja -c "$npmPath install --prefix /home/moja/remote-terminal-client socket.io-client@2.1.1"
-mv /var/tmp/`basename $0` /home/moja/remote-terminal-client/bin/`basename $0`
+runuser -l moja -c "$npmPath install --prefix $clientPath node-pty"
+runuser -l moja -c "$npmPath install --prefix $clientPath socket.io-client@2.1.1"
+mv /var/tmp/`basename $0` $clientPath/bin/`basename $0`
 
 $npmPath install pm2@latest -g
 
