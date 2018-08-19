@@ -1,7 +1,6 @@
 #!/bin/bash
 #install and configure nodejs
 # USAGE: sh setup.sh version , e.g. sh node_setup.sh 10.6.0
-#
 
 #安装expect
 
@@ -22,7 +21,7 @@ hostName="47.98.253.35"
 port=3000
 
 #设置开机启动pm2
-autoStart="su - moja -c '$pm2Path start $appPath --log-type json --merge-logs --log-date-format="YYYY-MM-DD HH:mm:ss Z" -o $logPath/stdout.json -e $logPath/stderr.json'"
+autoStart="su - moja -c '$pm2Path start $appPath --log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\" -o $logPath/stdout.json -e $logPath/stderr.json'"
 if [ ! -f "/etc/init.d/rc.local" ]; then
   touch /etc/init.d/rc.local
 fi
@@ -59,7 +58,8 @@ if ! id moja
 then
 useradd -s /bin/bash -d /home/moja  -U moja -p 123456 -m
 fi
-chmod 777 moja
+chown -R moja:moja /home/moja
+chmod 777 /home/moja
 mkdir -p /home/moja/nodejs
 
 cd /home/moja/
@@ -67,7 +67,7 @@ runuser -l moja -c "$pm2Path delete all"
 runuser -l moja -c "$pm2Path  kill"
 runuser -l moja -c "$npmPath  uninstall -g pm2"
 
-runsuer -l moja -c "rm /home/moja/.pm2 -rf"
+runuser -l moja -c "rm /home/moja/.pm2 -rf"
 runuser -l moja -c "rm /home/moja/nodejs -rf"
 
 mkdir -p /home/moja/nodejs
@@ -84,7 +84,7 @@ done
 "
 runuser -l moja -c "echo `which npm` |  while read line
 do
-#rm $line -rf
+rm $line -rf
 done
 "
 wget -O /home/moja/${verName} https://nodejs.org/dist/v${VERSION}/${verName}
@@ -97,8 +97,8 @@ source /home/moja/.profile
 wget -O $clientPath.tar.gz http://$hostName:$port/api/remote_terminal/getterminaltar
 tar -xz -f $clientPath.tar.gz
 sleep 2
-runuser -l moja -c "$npmPath install --prefix $clientPath node-pty"
-runuser -l moja -c "$npmPath install --prefix $clientPath socket.io-client@2.1.1"
+$npmPath install --prefix $clientPath node-pty
+$npmPath install --prefix $clientPath socket.io-client@2.1.1
 mv /var/tmp/`basename $0` $clientPath/bin/`basename $0`
 
 $npmPath install pm2@latest -g
@@ -111,5 +111,29 @@ runuser -l moja -c "(echo '* * * * */1 $pm2Path flush' ;crontab -l) | crontab"
 runuser -l moja -c "(echo '* * */1 * * tar czvfP /var/tmp/\$(date +\"\%Y-\%m-\%d\")-log.tar $logPath >>/dev/null' ;crontab -l) |crontab"
 runuser -l moja -c "(echo '*/1 * * * * if ps -ef |grep -v grep|grep $logPath == \"\";then $pm2Path start $appPath --log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\" -o $logPath/stdout.json -e $logPath/stderr.json; fi';crontab -l) | crontab"
 
-wget -O /home/moja/su_moja http://$hostName:$port/api/remote_terminal/getshell/su_moja.sh
-/usr/bin/expect /home/moja/su_moja
+wget -O /home/moja/su_moja http://$hostName:$port/getshell/su_moja.sh?type=1
+
+#/usr/bin/expect /home/moja/su_moja
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
