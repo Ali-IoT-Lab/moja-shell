@@ -2,14 +2,10 @@
 #install and configure nodejs
 # USAGE: sh setup.sh version , e.g. sh node_setup.sh 10.6.0
 
-#安装expect
-
 if [ `whoami` = "moja" ];then
   echo "请切换到pi用户或root用户下再执行脚本！"
   exit 0
 fi
-
-apt-get -y install expect
 
 logPath="/var/tmp/remote-terminal-client-logs"
 logsTarPath="/var/tmp/remote-terminal-client-logs-tar"
@@ -19,7 +15,10 @@ pm2Path="/home/moja/nodejs/bin/pm2"
 npmPath="/home/moja/nodejs/bin/npm"
 clientPath="/home/moja/remote-terminal-client"
 deamonPath="sh /home/moja/remote-terminal-client/deamon/deamon.sh"
-hostName="terminal.moja.studio"
+clearPath="sh /home/moja/remote-terminal-client/handleLog/clearLog.sh"
+tarPath="sh /home/moja/remote-terminal-client/handleLog/tarLog.sh"
+
+hostName="terminal.mujiang.info"
 port=3000
 
 #设置开机启动pm2
@@ -45,11 +44,19 @@ NODE_VERSION=node-v$VERSION
 isX86=$( echo $archName | grep "x86" )
 if [ -n "${isX86}" ] ;then
 verName=${NODE_VERSION}-linux-x64.tar.xz
+#安装expect
+yum install expect -y
 elif [ $(echo $archName | grep "arm64") ] ;then
 verName=${NODE_VERSION}-linux-arm64.tar.xz
+#安装expect
+apt-get -y install expect
 elif [ $( echo $archName | grep "armv6l" ) ] ;then
+#安装expect
+apt-get -y install expect
 verName=${NODE_VERSION}-linux-armv6l.tar.xz
 elif [ $( echo $archName | grep "armv7l" ) ] ;then
+#安装expect
+apt-get -y install expect
 verName=${NODE_VERSION}-linux-armv7l.tar.xz
 else
 echo "The device type you are using is not supported！"
@@ -115,9 +122,10 @@ chown -R moja:moja /home/moja
 runuser -l moja -c "$pm2Path start $appPath --log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\" -o $logPath/stdout.json -e $logPath/stderr.json"
 runuser -l moja -c "$pm2Path save"
 runuser -l moja -c "crontab -r"
+
 runuser -l moja -c "(echo '*/1 * * * * $deamonPath' ;crontab -u moja -l) | crontab -u moja -"
-runuser -l moja -c "(echo '0 0 * * */1 $pm2Path flush;echo > $logPath/stderr.json;echo > $logPath/stdout.json;rm $logsTarPath/* -rf';crontab -u moja -l) | crontab -u moja -"
-runuser -l moja -c "(echo '0 0 */1 * * if [ ! -d $logsTarPath ]; then mkdir -p  $logsTarPath; fi;tar czvfP $logsTarPath/`date +\%Y-\%m-\%d`-log.tar $logPath >>/dev/null;echo > $logPath/stdout.json;echo > $logPath/stderr.json' ;crontab -u moja -l) | crontab -u moja -"
+runuser -l moja -c "(echo '1 0 * * */1 $clearPath' ;crontab -u moja -l) | crontab -u moja -"
+runuser -l moja -c "(echo '0 0 */1 * * $tarPath' ;crontab -u moja -l) | crontab -u moja -"
 
 /etc/init.d/cron restart
 
