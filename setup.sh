@@ -1,133 +1,217 @@
-#!/bin/bash
-#install and configure nodejs
-# USAGE: sh setup.sh version , e.g. sh node_setup.sh 10.6.0
 
 if [ `whoami` = "moja" ];then
-  echo "请切换到pi用户或root用户下再执行脚本！"
+  echo "请切换到拥有sudo权限的用户下再下载执行脚本！"
   exit 0
 fi
 
-logPath="/var/tmp/remote-terminal-client-logs"
-logsTarPath="/var/tmp/remote-terminal-client-logs-tar"
+hostName="xuyaofang.com"
+VERSION=v8.12.0
 
-appPath="/home/moja/remote-terminal-client/app.js"
-pm2Path="/home/moja/nodejs/bin/pm2"
-npmPath="/home/moja/nodejs/bin/npm"
-clientPath="/home/moja/remote-terminal-client"
-deamonPath="sh /home/moja/remote-terminal-client/deamon/deamon.sh"
-clearPath="sh /home/moja/remote-terminal-client/handleLog/clearLog.sh"
-tarPath="sh /home/moja/remote-terminal-client/handleLog/tarLog.sh"
+HOME_DIR='home'
 
-hostName="terminal.mujiang.info"
-port=3000
+osType=`uname -s|tr '[A-Z]' '[a-z]'`
+cpuType=`uname -m`
 
-#设置开机启动pm2
-autoStart="sudo runuser -l moja -c '$pm2Path start $appPath --log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\" -o $logPath/stdout.json -e $logPath/stderr.json'"
-if [ ! -f "/etc/rc.local" ]; then
-  touch /etc/rc.local
-fi
-chmod 755 /etc/rc.local
-sed -i '/exit 0/d' /etc/rc.local
-sed -i '/--log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\"/d' /etc/rc.local
-echo "${autoStart}" >> /etc/rc.local
-echo "exit 0" >> /etc/rc.local
-#获取nodejs版本号
-if [ $# -eq 0 ] ; then
-	VERSION=8.11.3
+isX86=$( echo $cpuType | grep "x86" )
+isArm=$( echo $cpuType | grep "arm" )
+
+if [ -n "${isX86}" ] ; then
+  cpuSize=$( echo $isX86 | awk -F '_' '{print $2}')
+  verName=node-$VERSION-$osType-x$cpuSize
+elif [  -n "${isArm}" ] ;then
+  verName=node-$VERSION-$osType-$isArm
 else
-	VERSION=$1
-fi
-
-#获取平台类型
-archName=`arch`
-NODE_VERSION=node-v$VERSION
-isX86=$( echo $archName | grep "x86" )
-if [ -n "${isX86}" ] ;then
-verName=${NODE_VERSION}-linux-x64.tar.xz
-#安装expect
-yum install expect -y
-elif [ $(echo $archName | grep "arm64") ] ;then
-verName=${NODE_VERSION}-linux-arm64.tar.xz
-#安装expect
-apt-get -y install expect
-elif [ $( echo $archName | grep "armv6l" ) ] ;then
-#安装expect
-apt-get -y install expect
-verName=${NODE_VERSION}-linux-armv6l.tar.xz
-elif [ $( echo $archName | grep "armv7l" ) ] ;then
-#安装expect
-apt-get -y install expect
-verName=${NODE_VERSION}-linux-armv7l.tar.xz
-else
-echo "The device type you are using is not supported！"
+  echo "--------------------------------------不支持的系统类型---------------------------------------"
   exit 1
 fi
 
 if ! id moja
 then
-useradd -s /bin/bash -d /home/moja  -U moja -p 123456 -m
+  echo "----------------------------------------创建moja用户------------------------------------------"
+   if [ $osType = "darwin" ] ;then
+      HOME_DIR='Users'
+      dscl . -create /Users/moja
+      dscl . -create /Users/moja UserShell /bin/bash
+      dscl . -create /Users/moja RealName "USER NAME"
+      dscl . -create /Users/moja UniqueID 503
+      dscl . -create /Users/moja PrimaryGroupID 20
+      dscl . -create /Users/moja NFSHomeDirectory /Users/moja
+      dscl . -passwd /Users/moja 123456
+      dseditgroup -o create moja
+      dscl . -append /Groups/moja GroupMembership moja
+      createhomedir -c -u moja
+    elif [ $osType = "linux" ] ;then
+      useradd -s /bin/bash -d /$HOME_DIR/moja  -U moja -m
+    else
+      echo "-----------------------------------部分文件可能会被覆盖------------------------------------"
+    fi
+else
+      echo "清空moja用户!"
+       if [ $osType = "darwin" ] ;then
+         HOME_DIR='Users'
+       fi
 fi
-chmod 777 /home/moja
-mkdir -p /home/moja/nodejs
+echo "-------------------------------------------读取私钥---------------------------------------------"
+mkdir /$HOME_DIR/moja/.config
+touch /$HOME_DIR/moja/.config/privateKey.js
+touch /$HOME_DIR/moja/.config/email.js
 
-cd /home/moja/
-runuser -l moja -c "$pm2Path delete all"
-runuser -l moja -c "$pm2Path  kill"
-runuser -l moja -c "$npmPath  uninstall -g pm2"
-
-runuser -l moja -c "rm /home/moja/.pm2 -rf"
-runuser -l moja -c "rm /home/moja/nodejs -rf"
-
-runuser -l moja -c "mkdir -p /home/moja/nodejs"
-
-runuser -l moja -c "echo `which pm2` |  while read line
-do
-rm $line -rf
-done
-"
-runuser -l moja -c "echo `which node` |  while read line
-do
-rm $line -rf
-done
-"
-runuser -l moja -c "echo `which npm` |  while read line
-do
-rm $line -rf
-done
-"
-wget -O /home/moja/${verName} https://nodejs.org/dist/v${VERSION}/${verName}
-tar -xJf /home/moja/${verName} --no-wildcards-match-slash --anchored \
-     --exclude */CHANGELOG.md --exclude */LICENSE --exclude */README.md \
-     --strip 1 -C /home/moja/nodejs
+echo "module.exports ={privateKey:\`$privateKey\`}" > /$HOME_DIR/moja/.config/privateKey.js
+echo "module.exports ={email:\`$email\`}" > /$HOME_DIR/moja/.config/email.js
+echo "-----------------------------------------变量初始化---------------------------------------------"
+npmPath="/$HOME_DIR/moja/nodejs/bin/npm"
+pm2Path="/$HOME_DIR/moja/nodejs/bin/pm2"
+clientPath="/$HOME_DIR/moja/remote-terminal-client"
+logPath="/var/tmp/client-logs"
+appPath="/$HOME_DIR/moja/remote-terminal-client/app.js"
+deamonPath="sh /$HOME_DIR/moja/remote-terminal-client/deamon/deamon.sh"
 
 
-sed -i '/moja/d' /home/moja/.profile
+startApp="$pm2Path start $appPath --log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\" -o $logPath/out.log -e $logPath/err.log"
 
-echo "export PATH=`echo $PATH |sed 's/:\/home\/moja\/nodejs\/bin\///g'`:/home/moja/nodejs/bin/" >> /home/moja/.profile
-source /home/moja/.profile
+echo "----------------------------------下载nodejs安装包 ------------------------------------"
 
-wget -O $clientPath.tar.gz http://$hostName/api/remote_terminal/getterminaltar
-tar -xz -f $clientPath.tar.gz
+echo $startApp
 
-sleep 2
+wget -O /$HOME_DIR/moja/$verName.tar.xz https://nodejs.org/dist/$VERSION/$verName.tar.xz
 
-$npmPath install --prefix $clientPath node-pty
-$npmPath install --prefix $clientPath socket.io-client@2.1.1
-mv /var/tmp/`basename $0` $clientPath/bin/`basename $0`
+if [ $? -ne 0 ] ; then
+echo "----------------------------------nodejs安装包解压失败-------------------------------------"
+exit 1
+fi
+cd /$HOME_DIR/moja
+mkdir nodejs
+tar xvJf /$HOME_DIR/moja/$verName.tar.xz --strip 1 -C /$HOME_DIR/moja/nodejs
+
+if [ $? -ne 0 ] ; then
+  echo "-------------------------------------nodejs安装包解压失败----------------------------------------"
+  exit 1
+fi
+
+#PATH=$PATH:/$HOME_DIR/moja/nodejs/bin
+#export PATH
+
+rm /usr/bin/node
+
+if [ $osType = "darwin" ]; then
+  alias node=/$HOME_DIR/moja/nodejs/bin/node
+else
+  ln -s /$HOME_DIR/moja/nodejs/bin/node /usr/bin/node
+fi
+
+
+$npmPath config set loglevel=http
+
+#$npmPath set progress=false
+echo "------------------------------------------安装pm2--------------------------------------------"
 
 $npmPath install pm2@latest -g
+if [ $? -ne 0 ] ; then
+echo "-----------------------------------------pm2安装失败------------------------------------------"
+exit 1
+fi
 
-chown -R moja:moja /home/moja
+echo "--------------------------------------下载客户端安装包--------------------------------------"
 
-runuser -l moja -c "$pm2Path start $appPath --log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\" -o $logPath/stdout.json -e $logPath/stderr.json"
-runuser -l moja -c "$pm2Path save"
-runuser -l moja -c "crontab -r"
+wget -O $clientPath.tar.gz http://$hostName/api/remote-terminal/tar
 
-runuser -l moja -c "(echo '*/1 * * * * $deamonPath' ;crontab -u moja -l) | crontab -u moja -"
-runuser -l moja -c "(echo '1 0 * * */1 $clearPath' ;crontab -u moja -l) | crontab -u moja -"
-runuser -l moja -c "(echo '0 0 */1 * * $tarPath' ;crontab -u moja -l) | crontab -u moja -"
+if [ $? -ne 0 ] ; then
+  echo "------------------------------------解压客户端安装包--------------------------------------"
+  exit 1
+fi
 
-/etc/init.d/cron restart
+echo "-------------------------------------解压客户端安装包---------------------------------------"
+cd /$HOME_DIR/moja/
+tar -xvf /$HOME_DIR/moja/remote-terminal-client.tar.gz -C /$HOME_DIR/moja
 
-wget -O /home/moja/su_moja http://$hostName/getshell/su_moja.sh?type=1
-#/usr/bin/expect /home/moja/su_moja
+if [ $? -ne 0 ] ; then
+  echo "----------------------------------客户端安装包解压失败-------------------------------------"
+  exit 1
+fi
+
+
+echo "-------------------------------------下载客户端项目依赖-------------------------------------"
+
+cd /$HOME_DIR/moja/remote-terminal-client
+
+$npmPath install --unsafe-perm=true --allow-root node-pty@0.7.6
+
+if [ $? -ne 0 ] ; then
+  echo "------------------------------------node-pty@0.7.6下载失败----------------------------------"
+  exit 1
+fi
+
+$npmPath install socket.io-client@2.1.1
+if [ $? -ne 0 ] ; then
+  echo "---------------------------socket.io-client@2.1.1下载失败------------------------------"
+  exit 1
+fi
+$npmPath install physical-cpu-count@2.0.0
+if [ $? -ne 0 ] ; then
+  echo "--------------------------physical-cpu-count@2.0.0下载失败----------------------------"
+  exit 1
+fi
+$npmPath install request@2.88.0
+if [ $? -ne 0 ] ; then
+  echo "--------------------------------request@2.88.0下载失败 -------------------------------"
+  exit 1
+fi
+$npmPath install nano-time@1.0.0
+if [ $? -ne 0 ] ; then
+    echo "------------------------------nano-time@1.0.0下载失败-------------------------------"
+  exit 1
+fi
+
+if [ $osType = 'linux' ]; then
+  chown -R moja:moja /$HOME_DIR/moja
+fi
+
+echo "--------------------------------------启动服务--------------------------------------"
+chmod 777 /var/tmp
+mkdir -p $logPath
+chmod 777 $logPath
+
+if [ $osType = 'linux' ]; then
+su - moja -c "$pm2Path start $appPath --log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\" -o $logPath/out.log -e $logPath/err.log"
+fi
+
+if [ $osType = 'darwin' ]; then
+$pm2Path start $appPath --log-type json --merge-logs --log-date-format="YYYY-MM-DD HH:mm:ss Z" -o $logPath/out.log -e $logPath/err.log
+fi
+
+#echo "export PATH=`echo $PATH |sed 's/:\/home\/moja\/nodejs\/bin//g'`:/home/moja/nodejs/bin" >> /etc/bashrc
+#source /etc/bashrc
+
+if [ $? -ne 0 ] ; then
+  echo "-----------------------------------------启动服务失败-------------------------------------"
+  #exit 1
+fi
+
+echo "-------------------------------------添加守护进程任务---------------------------------------"
+
+(echo '*/1 * * * * sh /\$HOME_DIR/moja/remote-terminal-client/deamon/deamon.sh' ;crontab -l) | crontab
+
+echo "--------------------------------------添加日志管理任务--------------------------------------"
+
+(echo '1 0 * * */1 sh /\$HOME_DIR/moja/remote-terminal-client/handleLog/clearMonitorLog.sh' ;crontab -l) | crontab
+(echo '0 0 */1 * * sh /\$HOME_DIR/moja/remote-terminal-client/handleLog/tarMonitorLog.sh' ;crontab -l) | crontab
+
+echo "------------------------------------- 添加开机自启动任务 -----------------------------------"
+ if [ ! -f "/etc/rc.local" ]; then
+    touch /etc/rc.local
+ fi
+  chmod 755 /etc/rc.local
+  if [ $HOME_DIR = 'Users' ]; then
+    sed -i '' '/exit 0/d' /etc/rc.local
+    sed -i '' '/--log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\"/d' /etc/rc.local
+  elif [ $HOME_DIR = 'home' ]; then
+    sed -i '/exit 0/d' /etc/rc.local
+    sed -i '/--log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\"/d' /etc/rc.local
+  else
+    echo "--------------------------------------不支持的系统类型--------------------------------------"
+    exit 1
+  fi
+  echo "${startApp}" >> /etc/rc.local
+  echo "exit 0" >> /etc/rc.local
+echo "------------------------------------------安装完成--------------------------------------------"
+
