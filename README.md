@@ -14,9 +14,7 @@ Link: http://terminal.mujiang.info/
 
 那么远程终端，通过本脚本一键安装后，只要设备可以联上互联网，只要你能找到 Chrome 浏览器，就能随时通过 SSH 登录到设备。
 
-远程终端使用 nodejs 为客户端，兼容所有 Linux 平台，
-
-目前已测试通过：
+远程终端使用 nodejs 为客户端，兼容所有 Linux 平台，目前已测试通过：
 * ✔︎ MacOS
 * ✔︎ Raspbian
 * ✔︎ Debian
@@ -28,11 +26,8 @@ Link: http://terminal.mujiang.info/
 ### 团队
 我们是阿里云 Moja 解决方案实验室团队，针对物联网的应用场景给出落地的解决方案，推动物联网应用的发展。
 
-联系我们：
-
-邮件：lichen.dlc@alibaba-inc.com
-
-微信：eric_dum
+`联系我们：
+邮件：lichen.dlc@alibaba-inc.com`
 
 ### 目录结构
 * setup.sh 安装脚本
