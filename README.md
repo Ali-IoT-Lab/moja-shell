@@ -1,7 +1,7 @@
 # Moja 远程终端安装脚本
 Moja Remote Terminal Setup Script
 
-Link: http://terminal.mujiang.info/
+Link: https://terminal.mujiang.info/
 
 ### 什么是远程终端
 如果你：
