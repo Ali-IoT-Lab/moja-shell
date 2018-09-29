@@ -19,6 +19,8 @@ Link: https://terminal.moja-lab.com/
 * ✔︎ Raspbian
 * ✔︎ Debian
 * ✔︎ CentOS
+* ✔︎ Ubuntu
+* ✔︎ RedHat
 * ✔︎ hassbian
 
 目前远程终端尚是 Beta 版，可能有些许问题，大家可以在 Issue 中提问题，我们将竭尽全力改善产品。
