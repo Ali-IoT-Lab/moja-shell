@@ -4,16 +4,16 @@
 osType=`uname -s|tr '[A-Z]' '[a-z]'`
 
 if [ $osType = "darwin" ] ;then
-  HOME='Users'
+  HOME_DIR='Users'
 fi
 if [ $osType = "linux" ] ;then
-  HOME='home'
+  HOME_DIR='home'
 fi
 
 envrun="sudo -u moja env PATH=$PATH:/$HOME_DIR/moja/.config/nodejs/bin"
 logPath="/var/tmp/client-logs"
 logsTarPath="/var/tmp/client-logs-tar"
-pm2Path="/$HOME/moja/.config/nodejs/bin/pm2"
+pm2Path="/$HOME_DIR/moja/.config/nodejs/bin/pm2"
 
 $envrun $pm2Path flush
 

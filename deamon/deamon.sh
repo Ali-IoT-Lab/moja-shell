@@ -5,17 +5,17 @@
 osType=`uname -s|tr '[A-Z]' '[a-z]'`
 
 if [ $osType = "darwin" ] ;then
-  HOME='Users'
+  HOME_DIR='Users'
 fi
 if [ $osType = "linux" ] ;then
-  HOME='home'
+  HOME_DIR='home'
 fi
 
 envrun="sudo -u moja env PATH=$PATH:/$HOME_DIR/moja/.config/nodejs/bin"
 
 logPath="/var/tmp/client-logs"
-appPath="/$HOME/moja/.config/remote-terminal-client/app.js"
-pm2Path="/$HOME/moja/.config/nodejs/bin/pm2"
+appPath="/$HOME_DIR/moja/.config/remote-terminal-client/app.js"
+pm2Path="/$HOME_DIR/moja/.config/nodejs/bin/pm2"
 
 tmp=`ps -ef | grep $appPath | grep -v grep`
 
