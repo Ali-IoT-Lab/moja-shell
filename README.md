@@ -28,8 +28,9 @@ Link: https://terminal.moja-lab.com/
 ### 团队
 我们是阿里云 Moja 解决方案实验室团队，针对物联网的应用场景给出落地的解决方案，推动物联网应用的发展。
 
-`联系我们：
-邮件：lichen.dlc@alibaba-inc.com`
+联系我们：
+
+`邮件：lichen.dlc@alibaba-inc.com`
 
 ### 目录结构
 * setup.sh 安装脚本
