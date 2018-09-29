@@ -10,10 +10,10 @@ if [ $osType = "linux" ] ;then
   HOME='home'
 fi
 
-envrun="sudo -u moja env PATH=$PATH:/$HOME_DIR/moja/nodejs/bin"
+envrun="sudo -u moja env PATH=$PATH:/$HOME_DIR/moja/.config/nodejs/bin"
 logPath="/var/tmp/client-logs"
 logsTarPath="/var/tmp/client-logs-tar"
-pm2Path="/$HOME/moja/nodejs/bin/pm2"
+pm2Path="/$HOME/moja/.config/nodejs/bin/pm2"
 
 $envrun $pm2Path flush
 

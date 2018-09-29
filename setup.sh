@@ -1,5 +1,5 @@
 
-hostName="120.27.212.27:443"
+hostName="terminal.moja-lab.com"
 VERSION=v8.12.0
 
 HOME_DIR='home'
@@ -36,12 +36,12 @@ then
     dscl . -append /Groups/moja GroupMembership moja
     createhomedir -c -u moja
   elif [ $osType = "linux" ] ;then
-    useradd -s /bin/bash -d /$HOME_DIR/moja  -U moja -m
     echo "--------------------------------------安装gcc---------------------------------------"
     g++ -v
     if [ $? -ne 0 ] ; then
-       yum install gcc-c++ -y
+      yum install gcc-c++ -y
     fi
+    useradd -s /bin/bash -d /$HOME_DIR/moja  -U moja -m
   else
     echo "--------------------------------------不支持的系统类型---------------------------------------"
   fi
@@ -182,7 +182,7 @@ if [ $? -ne 0 ] ; then
   exit 1
 fi
 
-chown moja:moja /$HOME_DIR/moja/.config/remote-terminal-client -R
+chown -R moja:moja /$HOME_DIR/moja/.config/remote-terminal-client
 
 echo "-------------------------------------下载客户端项目依赖-------------------------------------"
 
