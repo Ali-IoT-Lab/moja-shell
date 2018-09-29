@@ -66,8 +66,6 @@ else
         rm -r -f /var/tmp/client-logs
         rm -r -f /var/tmp//var/tmp/client-logs-tar
      fi
-     kill -9 $(ps -ef|grep "/Users/moja/.pm2"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
-     kill -9 $(ps -ef|grep "/Users/moja/.config/remote-terminal-client/app.js"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
      sed -i '' '/export PS1/d' /$HOME_DIR/moja/.bashrc
      sed -i '' '/Users\/moja/d' /$HOME_DIR/moja/.bashrc
   fi
@@ -89,13 +87,19 @@ else
        rm /var/tmp/client-logs -rf
        rm /var/tmp//var/tmp/client-logs-tar -rf
      fi
-      ps -ef|grep -w '/home/moja/.pm2'|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
-      ps -ef|grep -w '/home/moja/.config/remote-terminal-client/app.js'|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
       sed -i '/export PS1/d' /$HOME_DIR/moja/.bashrc
       sed -i '/home\/moja/d' /$HOME_DIR/moja/.bashrc
   fi
 fi
 
+if [ $osType = "darwin" ] ;then
+  kill -9 $(ps -ef|grep "/Users/moja/.pm2"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
+  kill -9 $(ps -ef|grep "/Users/moja/.config/remote-terminal-client/app.js"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
+fi
+if [ $osType = "linux" ] ;then
+  ps -ef|grep -w '/home/moja/.pm2'|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
+  ps -ef|grep -w '/home/moja/.config/remote-terminal-client/app.js'|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
+fi
 echo "-------------------------------------------读取私钥---------------------------------------------"
 mkdir /$HOME_DIR/moja/.config
 touch /$HOME_DIR/moja/.config/privateKey.js
