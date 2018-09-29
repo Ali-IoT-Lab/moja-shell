@@ -45,3 +45,5 @@ Link: https://terminal.moja-lab.com/
 * handleLog 日志打包
   * clearLog.sh 日志清除脚本 功能：每隔一周清除一次 维持7天以内到日志文件数量
   * tarlog.sh  日志打包脚本 功能：每天打包一次日志
+* useAge 监控数据采集
+  * useAge.sh 监控数据采集脚本 功能：采集内存 cpu 磁盘使用率
