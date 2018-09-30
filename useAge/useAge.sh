@@ -37,7 +37,7 @@ if [ $osType = 'darwin' ]; then
 fi
 
 memUsage=`awk 'BEGIN{printf "%.2f\n",'$memUsed'/'$memTotal'}'`
-disku=`df -k|awk 'NR==2{print $5}'`
+disku=`df -k  |grep -w "/"|awk '{print$5}'`
 r4=$?
 diskUsage=${disku%?}
 if [ $r1=$r2=$r3=$r4=0 ] ;then
