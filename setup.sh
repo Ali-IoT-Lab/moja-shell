@@ -1,5 +1,6 @@
 
 hostName="terminal.moja-lab.com"
+protocol="https"
 VERSION=v8.12.0
 
 HOME_DIR='home'
@@ -56,7 +57,7 @@ else
      if [ -d "/$HOME_DIR/moja" ]; then
         rm -r -f /$HOME_DIR/moja/.config/nodejs
         rm -r -f /$HOME_DIR/moja/.config/remote-terminal-client*
-        rm -r -f /$HOME_DIR/moja/.config/privateKey.js
+        rm -r -f /$HOME_DIR/moja/.config/publicKey.js
         rm -r -f /$HOME_DIR/moja/.config/email.js
         rm -r -f /$HOME_DIR/moja/.config/npm-cache
         rm -r -f /$HOME_DIR/moja/.npm
@@ -77,7 +78,7 @@ else
      if [ -d "/$HOME_DIR/moja" ]; then
        rm /$HOME_DIR/moja/.config/nodejs -rf
        rm /$HOME_DIR/moja/remote-terminal-client* -rf
-       rm /$HOME_DIR/moja/.config/privateKey.js -rf
+       rm /$HOME_DIR/moja/.config/publicKey.js -rf
        rm /$HOME_DIR/moja/.config/email.js -rf
        rm /$HOME_DIR/moja/.config/npm-cache -rf
        rm /$HOME_DIR/moja/.npm -rf
@@ -91,6 +92,7 @@ else
       sed -i '/home\/moja/d' /$HOME_DIR/moja/.bashrc
   fi
 fi
+rm -r -f /$HOME_DIR/moja/.config/client-source
 
 if [ $osType = "darwin" ] ;then
   kill -9 $(ps -ef|grep "/Users/moja/.pm2"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
@@ -100,11 +102,13 @@ if [ $osType = "linux" ] ;then
   ps -ef|grep -w '/home/moja/.pm2'|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
   ps -ef|grep -w '/home/moja/.config/remote-terminal-client/app.js'|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
 fi
-echo "-------------------------------------------读取私钥---------------------------------------------"
+echo "-------------------------------------------读取公钥---------------------------------------------"
 mkdir /$HOME_DIR/moja/.config
-touch /$HOME_DIR/moja/.config/privateKey.js
+touch /$HOME_DIR/moja/.config/publicKey.js
 touch /$HOME_DIR/moja/.config/email.js
-echo "module.exports ={privateKey:\`$privateKey\`}" > /$HOME_DIR/moja/.config/privateKey.js
+touch /$HOME_DIR/moja/.config/moja-version
+echo $clientVersion > /$HOME_DIR/moja/.config/moja-version
+echo "module.exports ={publicKey:\`$publicKey\`}" > /$HOME_DIR/moja/.config/publicKey.js
 echo "module.exports ={email:\`$email\`}" > /$HOME_DIR/moja/.config/email.js
 
 if [ ! -f "/$HOME_DIR/moja/.config/terminalId.js" ]; then
@@ -126,10 +130,12 @@ appPath="/$HOME_DIR/moja/.config/remote-terminal-client/app.js"
 deamonPath="sh /$HOME_DIR/moja/.config/remote-terminal-client/deamon/deamon.sh"
 envrun="sudo -u moja env PATH=$PATH:/$HOME_DIR/moja/.config/nodejs/bin"
 npmopt="--userconfig=/$HOME_DIR/moja/.npmrc"
-startApp="$envrun $pm2Path start $appPath --log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\" -o $logPath/out.log -e $logPath/err.log"
-
+startApp="$envrun $pm2Path start $appPath --log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\" -o $logPath/out.log -e $logPath/err.log --name client-v$clientVersion"
+mkdir /$HOME_DIR/moja/.config/client-source
+touch /$HOME_DIR/moja/.config/stage
+chmod 777 /$HOME_DIR/moja/.config/stage
 echo "----------------------------------下载nodejs安装包 ------------------------------------"
-curl -o /$HOME_DIR/moja/.config/$verName.tar.xz https://$hostName/api/remote-terminal/tar/$verName.tar.xz
+curl -o /$HOME_DIR/moja/.config/$verName.tar.xz $protocol://$hostName/api/remote-terminal/tar/$verName.tar.xz
 
 if [ $? -ne 0 ] ; then
   echo "----------------------------------nodejs安装包下载失败-------------------------------------"
@@ -143,7 +149,7 @@ if [ $? -ne 0 ] ; then
   echo "----------------------------------nodejs安装包解压失败-------------------------------------"
   exit 1
 fi
-
+rm -r -f /$HOME_DIR/moja/.config/$verName.tar.xz
 mkdir /$HOME_DIR/moja/.config/npm-cache
 if [ $osType = 'linux' ]; then
   export HOME="/home/moja"
@@ -171,7 +177,7 @@ fi
 
 echo "--------------------------------------下载客户端安装包--------------------------------------"
 
-curl -o $clientPath.tar.gz https://$hostName/api/remote-terminal/tar/remote-terminal-client.tar.gz
+curl -o $clientPath.tar.gz $protocol://$hostName/api/remote-terminal/tar/remote-terminal-client.tar.gz
 
 if [ $? -ne 0 ] ; then
   echo "------------------------------------客户端安装包下载失败--------------------------------------"
@@ -185,7 +191,7 @@ if [ $? -ne 0 ] ; then
   echo "------------------------------------客户端安装包解压失败--------------------------------------"
   exit 1
 fi
-
+rm -r -f /$HOME_DIR/moja/.config/remote-terminal-client.tar.gz
 chown -R moja:moja /$HOME_DIR/moja/.config/remote-terminal-client
 
 echo "-------------------------------------下载客户端项目依赖-------------------------------------"
@@ -198,7 +204,7 @@ echo "--------------------------------------启动服务------------------------
 chmod 777 /var/tmp
 mkdir -p $logPath
 chmod 777 $logPath
-$envrun $pm2Path start $appPath --log-type json --merge-logs --log-date-format="YYYY-MM-DD HH:mm:ss Z" -o $logPath/out.log -e $logPath/err.log
+$envrun $pm2Path start $appPath --log-type json --merge-logs --log-date-format="YYYY-MM-DD HH:mm:ss Z" -o $logPath/out.log -e $logPath/err.log --name client-v$clientVersion
 
 if [ $? -ne 0 ] ; then
   echo "-----------------------------------------启动服务失败-------------------------------------"
@@ -225,7 +231,6 @@ if [ -z "$retClearLog" ]; then
   if [ $osType = "darwin" ] ;then
     (echo '1 0 * * */1 sh /Users/moja/.config/remote-terminal-client/handleLog/clearLog.sh' ;crontab -l) | crontab
   fi
-
 fi
 if [ -z "$retTarLog" ]; then
   if [ $osType = "linux" ] ;then
@@ -240,6 +245,7 @@ if [ ! -f "/etc/rc.local" ]; then
   touch /etc/rc.local
 fi
 chmod 755 /etc/rc.local
+
 if [ $HOME_DIR = 'Users' ]; then
   sed -i '' '/exit 0/d' /etc/rc.local
   sed -i '' '/--log-type json --merge-logs --log-date-format=\"YYYY-MM-DD HH:mm:ss Z\"/d' /etc/rc.local
