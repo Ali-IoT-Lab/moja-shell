@@ -47,3 +47,7 @@ Link: https://terminal.moja-lab.com/
   * tarlog.sh  日志打包脚本 功能：每天打包一次日志
 * useAge 监控数据采集
   * useAge.sh 监控数据采集脚本 功能：采集内存 cpu 磁盘使用率
+* operation 监控数据采集
+  * upgrade.sh 版本升级脚本 功能：1，下载新版本代码 2，备份旧版本 3，启动新版本代码 4，根据启动结果删除旧版本代码
+  * killApp.sh 删除旧版本进程  功能：新版本启动检测旧版本进程存在 则删除旧的应用
+  * uninstall.sh 卸载应用脚本  功能：收到卸载请求后删除安装文件 然后删除pm2进程和应用进程
