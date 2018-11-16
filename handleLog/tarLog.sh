@@ -15,5 +15,5 @@ deleteTar=`cd /var/tmp/client-logs-tar;ls -lrt *.tar|head -1|awk -F ' ' '{print 
 rotateCount=`cd /var/tmp/client-logs-tar;ls -l|grep .tar|wc -l`
 
 if [ $rotateCount -gt 7 ] ;then
-  rm $logsTarPath/$deleteTar -rf
+  rm -r -f $logsTarPath/$deleteTar
 fi
