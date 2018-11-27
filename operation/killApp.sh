@@ -1,6 +1,10 @@
 #!/bin/bash
 
 newClientVersion=$1
+HOME_DIR=""
+USER_DIR=""
+pm2Path=""
+
 osType=`uname -s|tr '[A-Z]' '[a-z]'`
 if [ $osType = "linux" ] ;then
   HOME_DIR="home"
@@ -11,21 +15,32 @@ else
   exit 1
 fi
 
-pm2Path="/$HOME_DIR/moja/.moja/nodejs/bin/pm2"
-oldVersion=`cat /$HOME_DIR/moja/.moja/moja-version`
-envrun="sudo -u moja env PATH=$PATH:/$HOME_DIR/moja/.moja/nodejs/bin"
+if [ -f ~/.moja/install-mode ] ; then
+  USER_DIR=~/.moja
+  pm2Path=$USER_DIR/client/remote-terminal-client-v$newClientVersion/node_modules/pm2/bin/pm2
+elif [ -f "/$HOME_DIR/moja/.moja/install-mode" ] ; then
+  USER_DIR=/$HOME_DIR/moja/.moja
+else
+  exit 1
+fi
+
+oldVersion=`cat $USER_DIR/moja-version`
 
 if [ "$oldVersion" = "$newClientVersion" ];then
   echo "相同版本的应用！"
 else
-  if [ `whoami` = 'moja' ] ; then
+  if [ -f ~/.moja/install-mode ] ; then
+    $pm2Path delete client-v$oldVersion
+  elif [ -f "/$HOME_DIR/moja/.moja/install-mode" ] ; then
     pm2 delete client-v$oldVersion
   else
-    $envrun $pm2Path delete client-v$oldVersion
+    exit 1
   fi
-  rm -r -f /$HOME_DIR/moja/.moja/client/remote-terminal-client-v$oldVersion
+  rm -r -f $USER_DIR/client/remote-terminal-client-v$oldVersion
 fi
 
-echo $newClientVersion > /$HOME_DIR/moja/.moja/moja-version
-rm -r -f /$HOME_DIR/moja/.moja/client-source/*
-echo > /$HOME_DIR/moja/.moja/stage
+cp -r -f $USER_DIR/client/remote-terminal-client-v$newClientVersion/deamon $USER_DIR/client
+cp -r -f $USER_DIR/client/remote-terminal-client-v$newClientVersion/handleLog $USER_DIR/client
+
+echo $newClientVersion > $USER_DIR/moja-version
+echo > $USER_DIR/stage

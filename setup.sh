@@ -82,10 +82,13 @@ fi
 echo "-------------------------------------------读取公钥---------------------------------------------"
 mkdir /$HOME_DIR/moja/.moja
 mkdir /$HOME_DIR/moja/.moja/client
+mkdir /$HOME_DIR/moja/.moja/client/tmpFile
 mkdir /$HOME_DIR/moja/.moja/client/remote-terminal-client-v$clientVersion
+touch /$HOME_DIR/moja/.moja/install-mode
 touch /$HOME_DIR/moja/.moja/publicKey.js
 touch /$HOME_DIR/moja/.moja/email.js
 touch /$HOME_DIR/moja/.moja/moja-version
+echo "curl" > /$HOME_DIR/moja/.moja/install-mode
 touch /$HOME_DIR/moja/.moja/moja-cloud-server-host
 echo $hostName > /$HOME_DIR/moja/.moja/moja-cloud-server-host
 echo $clientVersion > /$HOME_DIR/moja/.moja/moja-version
