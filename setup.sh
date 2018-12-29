@@ -99,14 +99,9 @@ $envrun $npmPath config set registry=https://registry.cnpmjs.org $npmopt
 $envrun $npmPath config set loglevel=http $npmopt
 $envrun $npmPath install -g moja-terminal --unsafe-perm=true --prefix /$HOME_DIR/moja/nodejs $npmopt
 $envrun $npmPath install -g pm2 --unsafe-perm=true --prefix /$HOME_DIR/moja/nodejs $npmopt
-
 $envrun moja set-key $userKey
 
 crontab -u root -l | grep -v '.moja' |crontab -
-
-
-
-
 (echo "*/1 * * * * sh /$HOME_DIR/moja/.moja/client/deamon/deamon.sh" ;crontab -l) | crontab
 (echo "*/1 * * * * sh deamon.sh" ;crontab -l) | crontab
 (echo "*/1 * * * * if [ -f \"/$HOME_DIR/moja/uninstall\" ]; then crontab -u root -l | grep -v \".moja\" |crontab -;rm -r -f /$HOME_DIR/moja/uninstall;fi;" ;crontab -l) | crontab
