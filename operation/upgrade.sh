@@ -9,16 +9,13 @@ if [ $osType = "linux" ] ;then
 elif [ $osType = "darwin" ] ;then
   HOME_DIR="Users"
 else
-  echo "-----------------------------------不支持的系统类型------------------------------------"
   exit 1
 fi
 
-if [ -f ~/.moja/install-mode ] ; then
-  USER_DIR=~/.moja
-elif [ -f "/$HOME_DIR/moja/.moja/install-mode" ] ; then
+if [ -f "/$HOME_DIR/moja/install-mode" ] ; then
   USER_DIR=/$HOME_DIR/moja/.moja
 else
-  exit 1
+  USER_DIR=~/.moja
 fi
 
 echo "0"> $USER_DIR/stage
@@ -30,7 +27,6 @@ mkdir $clientPath
 echo "1"> $USER_DIR/stage
 echo "--------------------------------------下载新版本代码-------------------------------------"
 curl -o $clientPath.tar.gz $hostName/api/remote-terminal/tar/remote-terminal-client-v$newClientVersion.tar.gz
-
 
 if [ $? -ne 0 ] ; then
   echo "----------------------------------下载新版本代码失败-------------------------------------"
@@ -54,8 +50,8 @@ rm -r -f $USER_DIR/client/remote-terminal-client-v$newClientVersion.tar.gz
 echo "3"> $USER_DIR/stage
 echo "--------------------------------------安装客户端依赖-------------------------------------"
 cd $USER_DIR/client/remote-terminal-client-v$newClientVersion
- npm config set loglevel=http
- npm install --unsafe-perm=true --registry https://registry.cnpmjs.org
+npm config set loglevel=http
+npm install --unsafe-perm=true --registry=https://registry.npm.taobao.org
 if [ $? -ne 0 ] ; then
   echo "----------------------------------安装客户端依赖失败-------------------------------------"
   rm -r -f $clientPath
@@ -65,16 +61,8 @@ fi
 
 echo "4"> $USER_DIR/stage
 echo "-----------------------------------启动新版本代码-----------------------------------"
-if [ -f ~/.moja/install-mode ] ; then
-  node $USER_DIR/client/start.js $newClientVersion npm
-  result=$?
-elif [ -f "$USER_DIR/install-mode" ] ; then
-  $USER_DIR/nodejs/bin/node $USER_DIR/client/start.js $newClientVersion
-  result=$?
-else
-  exit 1
-fi
-
+node $USER_DIR/client/start.js $newClientVersion
+result=$?
 echo "5"> $USER_DIR/stage
 if [ $result -ne 0 ] ; then
 echo "----------------------------------升级失败回退到旧版本代码---------------------------------"

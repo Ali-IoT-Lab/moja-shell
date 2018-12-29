@@ -3,10 +3,10 @@ const os = require("os");
 const p = require("path");
 const child_process = require("child_process");
 var HOME="";
-var pm2Path="";
 var envrun = "";
 var fileDirectory = "";
 var logPath="/var/tmp/client-logs";
+var pm2Pth="";
 
 if(os.platform() == 'linux') {
   HOME='home'
@@ -15,14 +15,13 @@ if(os.platform() == 'darwin'){
   HOME='Users'
 }
 
-if(fs.existsSync(p.join('/',HOME,'moja','.moja','install-mode'))){ //curl安装方式判断
- fileDirectory = `/${HOME}/moja/.moja/client`;
- pm2Path=`/${HOME}/moja/.moja/nodejs/bin/pm2`;
- envrun = `sudo -u moja env PATH=$PATH:/${HOME}/moja/.moja/nodejs/bin`;
-}else if(fs.existsSync(p.join(os.homedir(),'.moja','install-mode'))){ //npm安装方式判断
+if(fs.existsSync(p.join('/',HOME,'moja','install-mode'))){ //curl安装方式判断
+  fileDirectory = `/${HOME}/moja/.moja/client`;
+  envrun = `sudo -u moja env PATH=$PATH:/${HOME}/moja/nodejs/bin`;
+  pm2Pth='pm2';
+}else{ //npm安装方式判断
  fileDirectory = `${os.homedir()}/.moja/client`;
-}else {
-  process.exit(0);
+  pm2Pth=`${os.homedir()}/.moja/pmtwo/node_modules/pm2/bin/pm2`
 }
 
 var versionArray=[];
@@ -51,18 +50,20 @@ fs.readdir(fileDirectory, function (err, files) {
     }
   });
   var lastVersion = process.argv[2]||versionArray.sort(versionCompare)[0];
-  var appPath=`/${HOME}/moja/.moja/client/remote-terminal-client-v${lastVersion}/app.js`;
   var startParam = `--log-type json --merge-logs --log-date-format="YYYY-MM-DD HH:mm:ss Z" -o ${logPath}/out.log -e ${logPath}/err.log --name client-v${lastVersion}`;
-  if(process.argv[3] == 'npm') { //判断是否为npm安装方式
-    var appPath=`${os.homedir()}/.moja/client/remote-terminal-client-v${lastVersion}/app.js`;
-    var cmd = `${os.homedir()}/.moja/client/remote-terminal-client-v${lastVersion}/node_modules/pm2/bin/pm2 start ${appPath} ${startParam}`
-  }else {
+
+  if(fs.existsSync(p.join('/',HOME,'moja','install-mode'))) { //curl安装方式判断
+    var appPath=`/${HOME}/moja/.moja/client/remote-terminal-client-v${lastVersion}/app.js`;
     if(process.env.USER == 'moja') {
-      var cmd = `pm2 start ${appPath} ${startParam}`
+      var cmd = `${pm2Pth} start ${appPath} ${startParam}`
     }else {
-      var cmd = `${envrun} ${pm2Path} start ${appPath} ${startParam}`
+      var cmd = `${envrun} ${pm2Pth} start ${appPath} ${startParam}`
     }
+  }else {
+    var appPath=`${os.homedir()}/.moja/client/remote-terminal-client-v${lastVersion}/app.js`;
+    var cmd = `${pm2Pth} start ${appPath} ${startParam}`
   }
+
   var startApp = child_process.exec(cmd, { maxBuffer : 10000 * 1024 });
   var uout = "", uerr = "";
   startApp.stdout.on("data", (trunk) => {

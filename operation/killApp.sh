@@ -15,27 +15,20 @@ else
   exit 1
 fi
 
-if [ -f ~/.moja/install-mode ] ; then
-  USER_DIR=~/.moja
-  pm2Path=$USER_DIR/client/remote-terminal-client-v$newClientVersion/node_modules/pm2/bin/pm2
-elif [ -f "/$HOME_DIR/moja/.moja/install-mode" ] ; then
+if [ -f "/$HOME_DIR/moja/install-mode" ] ; then
   USER_DIR=/$HOME_DIR/moja/.moja
+  pm2Path='pm2'
 else
-  exit 1
+  USER_DIR=~/.moja
+  pm2Path=$USER_DIR/pmtwo/node_modules/pm2/bin/pm2
 fi
 
-oldVersion=`cat $USER_DIR/moja-version`
+oldVersion=`cat $USER_DIR/moja-version|tr -d '\n'`
 
 if [ "$oldVersion" = "$newClientVersion" ];then
   echo "相同版本的应用！"
 else
-  if [ -f ~/.moja/install-mode ] ; then
-    $pm2Path delete client-v$oldVersion
-  elif [ -f "/$HOME_DIR/moja/.moja/install-mode" ] ; then
-    pm2 delete client-v$oldVersion
-  else
-    exit 1
-  fi
+  $pm2Path delete client-v$oldVersion
   rm -r -f $USER_DIR/client/remote-terminal-client-v$oldVersion
 fi
 
