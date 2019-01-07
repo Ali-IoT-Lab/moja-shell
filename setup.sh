@@ -18,6 +18,38 @@ else
   echo "--------------------------------------不支持的系统类型---------------------------------------"
   exit 1
 fi
+
+#卸载旧版本
+uninstall_old(){
+  if [ $osType = "darwin" ] ;then
+    if [ -d "/Users/moja/.config/nodejs" ]; then
+      HOME_DIR='Users'
+      mv /Users/moja/.config/terminalId.js /Users/terminalId.js
+      mv /Users/moja/.config/userId.js /Users/userId.js
+      kill -9 $(ps -ef|grep "/Users/moja/.pm2"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
+      kill -9 $(ps -ef|grep "/Users/moja/.config/remote-terminal-client/app.js"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
+      dscl . delete /Groups/moja
+      dscl . delete /Users/moja
+      rm -r -f /Users/moja
+    fi
+  elif [ $osType = "linux" ] ;then
+   if [ -d "/home/moja/.config/nodejs" ]; then
+      HOME_DIR='home'
+      mv /home/moja/.config/terminalId.js /home/terminalId.js
+      mv /home/moja/.config/userId.js /home/userId.js
+      ps -ef|grep -w '/home/moja/.pm2'|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
+      ps -ef|grep -w '/home/moja/.config/remote-terminal-client/app.js'|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
+      userdel -f moja
+      rm -r -f /home/moja
+   fi
+  else
+    echo "--------------------------------------不支持的系统类型---------------------------------------"
+    exit 1
+  fi
+  crontab -u root -l | grep -v '.config' |crontab -
+  rm -r -f /var/tmp/client-logs
+  rm -r -f /var/tmp/client-logs-tar
+}
 #创建用户工作空间
 create_work_user(){
   if ! id moja
@@ -39,6 +71,7 @@ create_work_user(){
       passwd -d moja
     else
       echo "--------------------------------------不支持的系统类型---------------------------------------"
+      exit 1
     fi
   else
     if [ $osType = "darwin" ] ;then
@@ -70,6 +103,13 @@ init_var(){
 #安装设备应用
 install_app(){
   #下载nodejs
+  mkdir /$HOME_DIR/moja/.moja
+  if [ -f "/$HOME_DIR/userId.js" ]; then
+    mv /$HOME_DIR/userId.js /$HOME_DIR/moja/.moja
+  fi
+  if [ -f "/$HOME_DIR/terminalId.js" ]; then
+    mv /$HOME_DIR/terminalId.js /$HOME_DIR/moja/.moja
+  fi
   curl -o /$HOME_DIR/moja/$verName.tar.xz $hostName/api/remote-terminal/tar/$verName.tar.xz
 
   if [ $? -ne 0 ] ; then
@@ -122,7 +162,7 @@ add_crontab_list(){
   (echo "@reboot sh /$HOME_DIR/moja/.moja/client/deamon/deamon.sh" ;crontab -l) | crontab
 }
 
-
+uninstall_old
 echo "--------------------------------------------创建用户---------------------------------------------"
 create_work_user
 echo "--------------------------------------------清除目录---------------------------------------------"
