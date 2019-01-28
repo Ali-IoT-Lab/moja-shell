@@ -1,54 +1,39 @@
 #!/bin/bash
 
 osType=`uname -s|tr '[A-Z]' '[a-z]'`
-HOME_DIR=""
-USER_DIR=""
-PM2_DIR=""
+moja_home=~/.moja
+currHOME=~
 
-if [ $osType = "darwin" ] ;then
-  HOME_DIR='Users'
+if [ -f "$currHOME/install-mode" ] ; then
+  touch $currHOME/uninstall
+  rm -r -f $currHOME/.npm
+  rm -r -f $currHOME/nodejs
+  rm -r -f $currHOME/.npmrc
+  rm -r -f $currHOME/.pm2
+  rm -r -f $currHOME/install-mode
+  rm -r -f $currHOME/npm-cache
 fi
 
-if [ $osType = "linux" ] ;then
-  HOME_DIR='home'
-fi
-
-if [ -f "/$HOME_DIR/moja/install-mode" ] ; then
-  PM2_DIR=/$HOME_DIR/moja
-  USER_DIR=/$HOME_DIR/moja/.moja
-  if [ $osType = "darwin" ] ;then
-     sed -i '' '/export PS1/d' /$HOME_DIR/moja/.bashrc
-     sed -i '' '/Users\/moja/d' /$HOME_DIR/moja/.bashrc
-  elif [ $osType = "linux" ] ;then
-    sed -i '/export PS1/d' /$HOME_DIR/moja/.bashrc
-    sed -i '/home\/moja/d' /$HOME_DIR/moja/.bashrc
-  else
-    exit 1
-  fi
-  rm -r -f /$HOME_DIR/moja/.npm
-  rm -r -f /$HOME_DIR/moja/.npmrc
-  rm -r -f /$HOME_DIR/moja/npm-cache
-  rm -r -f /$HOME_DIR/moja/nodejs
-  rm -r -f /$HOME_DIR/moja/.pm2
-  rm -r -f /$HOME_DIR/moja/.moja_key
-  rm -r -f /$HOME_DIR/moja/install-mode
-  touch /$HOME_DIR/moja/uninstall
-else
-  USER_DIR=~/.moja
-  PM2_DIR=~
-  crontab -l | grep '.moja' |crontab -
-fi
-
-rm -r -f $USER_DIR
+rm -r -f $currHOME/.moja_key
+rm -r -f $moja_home
 rm -r -f /var/tmp/client-logs
-rm -r -f /var/tmp//var/tmp/client-logs-tar
-
+rm -r -f var/tmp/client-logs-tar
+crontab -l | grep -v '.moja' |crontab -
 
 if [ $osType = "darwin" ] ;then
-  kill -9 $(ps -ef|grep "$PM2_DIR/.pm2"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
-  kill -9 $(ps -ef|grep "$USER_DIR/client"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
+  rm -r -f /Users/moja/.moja
+  kill -9 $(ps -ef|grep "$currHOME/.pm2"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
+  kill -9 $(ps -ef|grep "$moja_home/client"|awk '$0 !~/grep/ {print $2}'|tr -s '\n' ' ') >/dev/null 2>&1
+  sed -i '' '/export PS1/d' $currHOME/.bashrc
+  sed -i '' '/Users\/moja/d' $currHOME/.bashrc
 fi
+
 if [ $osType = "linux" ] ;then
-  ps -ef|grep -w "$PM2_DIR/.pm2"|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
-  ps -ef|grep -w "$USER_DIR/client"|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
+  rm -r -f /home/moja/.moja
+  ps -ef|grep -w "$currHOME/.pm2"|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
+  ps -ef|grep -w "$moja_home/client"|grep -v grep|cut -c 9-15|xargs kill -9 >/dev/null 2>&1
+  sed -i '/export PS1/d' $currHOME/.bashrc
+  sed -i '/home\/moja/d' $currHOME/.bashrc
 fi
+
+
