@@ -41,7 +41,7 @@ Link: https://terminal.moja-lab.com/
   1. 日志打包清除任务挂载
   1. 开机自启动任务添加
 * deamon 守护程序
-  * deamon.sh pm2进程守护脚本 功能：每隔1分钟检测一次客户端代码进程，如果进程不存在就通过pm2 启动
+  * deamon.sh 1，进程守护脚本 功能：每隔1分钟检测一次客户端代码进程，如果进程不存在就执行启动文件start.js 2,开机启动
 * handleLog 日志打包
   * tarlog.sh  日志打包脚本 功能：每天打包一次日志 维持7天的日志
 * useAge 监控数据采集
